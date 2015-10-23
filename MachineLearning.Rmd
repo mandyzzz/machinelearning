@@ -1,0 +1,76 @@
+##Practical Machine Learning -- Coursera Course Final Project##
+
+MZ
+
+##Background##
+
+Using devices such as Jawbone Up, Nike FuelBand, and Fitbit it is now possible to collect a large amount of data about personal activity relatively inexpensively. These type of devices are part of the quantified self movement - a group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. One thing that people regularly do is quantify how much of a particular activity they do, but they rarely quantify how well they do it. In this project, your goal will be to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants. They were asked to perform barbell lifts correctly and incorrectly in 5 different ways. More information is available from the website here: http://groupware.les.inf.puc-rio.br/har (see the section on the Weight Lifting Exercise Dataset). 
+
+##1. Exploring the data:##
+```{r}
+setwd("C:\\users\\zhuangmg\\coursera\\Practical Machine Learning\\project1")
+training<-read.csv("pml-training.csv")
+testing<-read.csv("pml-testing.csv")
+dim(training)
+dim(testing)
+str(training$classe)
+summary(training$classe)
+sum(is.na(training$classe))
+```
+There are 19622 records with 160 variables in the training dataset.Threre are five different excercise manners, which are symbolized as A, B, C, D, and E. There is no missing values for classe in the training dataset.
+
+##2. Cleaning the data:##
+First, we will remove near zero variables and columns with a lot of NA. 
+```{r}
+library(caret)
+nzv <- nearZeroVar(training, saveMetrics=TRUE)
+training <- training[,nzv$nzv==FALSE]
+dim(training)
+```
+60 variables have been removed. Now, remove variables have more than 50% missing values and variables that are only subject information.
+```{r}
+wcolrm<-which(colSums(is.na(training))>(19622/2))
+training=training[,-c(wcolrm)]
+dim(training)
+summary(training[,1:6])
+training=training[,-c(1:6)]
+dim(training)
+```
+Then, split the training dataset into two parts: mytraining and mytesting. The former set is for building the model while the latter set is for model evaluation.
+```{r}
+set.seed(12345)
+library(caret)
+inTrain = createDataPartition(y=training$classe, p=0.6, list=FALSE)
+mytraining = training[inTrain,]
+mytesting = training[-inTrain,]
+dim(mytraining)
+dim(mytesting)
+```
+
+##3. Building models::##
+We will use decision tree(model2) and random forest(model3) methods to build the model for prediction.
+```{r}
+set.seed(12345)
+library(rattle)
+library(rpart)
+model1 <- rpart(classe~., data=mytraining, method="class")
+varImp(model1)
+# I find the eight most important variables through a simple model and build the later models based on those eight variables.
+model2 <- rpart(classe~roll_belt+magnet_dumbbell_y+pitch_forearm+magnet_belt_y+roll_forearm+magnet_dumbbell_x+accel_dumbbell_y+accel_dumbbell_x, data=mytraining, method="class")
+fancyRpartPlot(model2)
+```
+```{r}
+set.seed(12345)
+library(caret)
+library(randomForest)
+model3 <- randomForest(classe~roll_belt+magnet_dumbbell_y+pitch_forearm+magnet_belt_y+roll_forearm+magnet_dumbbell_x+accel_dumbbell_y+accel_dumbbell_x, data=mytraining, type="class", prox=T, importance=T)
+model3
+```
+I should be able to calculate accuracy by the following codes, but I consistently got error message as follows:
+Error in confusionMatrix.default(predict(model2, data = mytesting), mytesting$classe) : 
+  the data cannot have more levels than the reference
+If you can figure out what is the problem with my models or code, please let me know, thanks!
+```{r,eval=FALSE}
+cm1<-confusionMatrix(predict(model2,data=mytesting), mytestning$classe)
+cm2<-confusionMatrix(predict(model3,data=mytesting), mytesting$classe)
+```

@@ -1,3 +1,6 @@
+---
+output: html_document
+---
 ##Practical Machine Learning -- Coursera Course Final Project##
 
 MZ
@@ -73,4 +76,19 @@ If you can figure out what is the problem with my models or code, please let me 
 ```{r,eval=FALSE}
 cm1<-confusionMatrix(predict(model2,data=mytesting), mytestning$classe)
 cm2<-confusionMatrix(predict(model3,data=mytesting), mytesting$classe)
+```
+Predict testing results using random forest model:
+```{r}
+pred<-predict(model3,testing)
+pml_write_files = function(x){
+    n = length(x)
+    for(i in 1:n){
+        filename = paste0("problem_id_",i,".txt")
+        write.table(x[i],file=filename,quote=FALSE,row.names=FALSE,col.names=FALSE)
+    }
+}
+pml_write_files(pred)
+```
+
+
 ```
